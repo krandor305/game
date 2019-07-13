@@ -2,6 +2,10 @@ var character;
 var cursors;
 var map;
 var walls;
+var character2;
+var socket;
+var usersanim=[];
+var flag;
 
 class Scene1 extends Phaser.Scene{
 	
@@ -22,8 +26,8 @@ class Scene1 extends Phaser.Scene{
 		
 	
 		var pathcharacter='assets/character/'
-		this.load.tilemapTiledJSON("arenatile",'assets/arena.json');
-		this.load.image("arena",'assets/arena.png');
+		this.load.tilemapTiledJSON("arenatile",'assets/arena2.json');
+		this.load.image("arena",'assets/Dungeon_Tileset.png');
 		
 		this.load.image("idle0",pathcharacter+'idle/0.png');
 		this.load.image("idle1",pathcharacter+'idle/1.png');
@@ -189,45 +193,236 @@ class Scene1 extends Phaser.Scene{
 		//this.add.image(400,400,"arena");
 		map = this.make.tilemap({ key: "arenatile" });
 		var arena=map.addTilesetImage('dungeon','arena');
-		console.log(map);
-		console.log(arena.data);
-		walls=map.createStaticLayer('walls',arena);
-		var c1=map.createStaticLayer('Calque de Tile 1',arena);
-		var c2=map.createStaticLayer('Calque 2',arena);
+		var c1=map.createStaticLayer('Calque de Tile 1',arena,0,0);
+		walls=map.createStaticLayer('walls',arena,0,0);
+		var c2=map.createStaticLayer('Calque 2',arena,0,0);
 		walls.setCollisionByProperty({ collides: true });
-		cursors = this.input.keyboard.createCursorKeys();
-		character = this.add.sprite(500,600,"character").setScale(1);
-		this.physics.add.collider(character,walls);
+		character = new humain({scene:this,x:500,y:600},0).setScale(1);
+		this.physics.add.collider(character, walls);
 		this.cameras.main.startFollow(character);
-		character.play('idle');
-	}
+		cursors = this.input.keyboard.createCursorKeys();
+		this.keysDOWN = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+		this.keysLEFT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
+		this.keysRIGHT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+		this.keysUP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+		
+		socket=io();
+		socket.emit('new',character);
+		
+		let self=this;
+		socket.on('firstresponse',function(data){
+			for(var i=0;i<data.users.length-1;i++)
+			{
+				usersanim.push(self.physics.add.sprite(data.users[i].x,data.users[i].y,"character"));
+				usersanim[i].id=data.users[i].id;
+				usersanim[i].anims.play('idle',true);
+			}
+			character.id=data.character.id;
+		});
+	}	
 	
 	update()
 	{
+		
+		
+		let self=this;
+		socket.on('nouveau',function(c){
+			console.log(c.id);
+			usersanim.push(self.physics.add.sprite(c.x,c.y,"character"));
+			usersanim[usersanim.length-1].id=c.id;
+			usersanim[usersanim.length-1].anims.play('idle',true);
+		});
+		
+		socket.on('position',function(c){
+			for(var i=0;i<usersanim.length;i++)
+			{
+				if(usersanim[i].id==c.id)
+				{
+					usersanim[i].x=c.x;
+					usersanim[i].y=c.y;
+				}
+			}
+		});
+		
+		
+		socket.on('down',function(c){
+			for(var i=0;i<usersanim.length;i++)
+			{
+			if(usersanim[i].id==c)
+			{
+			//console.log('down'+c)
+			usersanim[c].setVelocityY(200);
+			usersanim[c].anims.play('down',true);
+			}
+			}
+		});
+		
+		socket.on('left',function(c){
+			for(var i=0;i<usersanim.length;i++)
+			{
+			if(usersanim[i].id==c)
+			{
+			usersanim[c].setVelocityX(-200);
+			usersanim[c].anims.play('left',true);
+			}
+			}
+		});
+		
+		socket.on('right',function(c){
+			for(var i=0;i<usersanim.length;i++)
+			{
+			if(usersanim[i].id==c)
+			{
+			usersanim[c].setVelocityX(200);
+			usersanim[c].anims.play('right',true);
+			}
+			}
+		});
+		
+		socket.on('up',function(c){
+			for(var i=0;i<usersanim.length;i++)
+			{
+			if(usersanim[i].id==c)
+			{
+			usersanim[c].setVelocityY(-200);
+			usersanim[c].anims.play('up',true);
+			}
+			}
+		});
+		
+		socket.on('hit',function(data){
+			if(character.id==data.victim.id)
+				{
+					character.x=500;
+					character.y=600;
+				}
+			for(var i=0;i<usersanim.length;i++)
+			{
+				let c;
+				if(usersanim[i].id==data.victim.id)
+				{
+					usersanim[i].x=500;
+					usersanim[i].y=600;
+				}
+			}
+			//console.log(data.victim.id+' has died');
+		});
+		
+		socket.on('slice',function(data){
+			for(var i=0;i<usersanim.length;i++)
+			{
+				if(usersanim[i].id==data.characterid)
+				{
+					usersanim[i].anims.play(data.direction)
+				}
+			}
+		});
+		
+		character.body.setVelocity(0)
+		for(var i=0;i<usersanim.length;i++)
+		{
+			usersanim[i].setVelocity(0);
+		}
+		character.anims.play('idle',true);
+		
 		if(cursors.down.isDown)
 		{
-			character.y+=5;
+			flag=true;
+			character.body.setVelocityY(200);
 			character.anims.play('down',true);
+			socket.emit('down',character.id);
 		}
 		else if(cursors.left.isDown)
 		{
-			character.x-=5;
+			flag=true;
+			character.body.setVelocityX(-200);
 			character.anims.play('left',true);
+			socket.emit('left',character.id);
 		}
 		else if(cursors.right.isDown)
 		{
-			character.x+=5;
+			flag=true;
+			character.body.setVelocityX(200);
 			character.anims.play('right',true);
+			socket.emit('right',character.id);
 		}
 		else if(cursors.up.isDown)
 		{
-			character.y-=5;
+			flag=true;
+			character.body.setVelocityY(-200);
 			character.anims.play('up',true);
+			socket.emit('up',character.id);
 		}
-		else
+		else if(cursors.down.isUp)
 		{
-			character.anims.play('idle',true);
+			if(flag==true)
+			{
+			flag=false;
+			socket.emit('position',{character:character,id:character.id});
+			}
 		}
+		else if(cursors.left.isUp)
+		{
+			if(flag==true)
+			{
+			flag=false;
+			socket.emit('position',character);
+			}
+		}
+		else if(cursors.right.isUp)
+		{
+			if(flag==true)
+			{
+			flag=false;
+			socket.emit('position',character);
+			}
+		}
+		else if(cursors.up.isUp)
+		{
+			if(flag==true)
+			{
+			flag=false;
+			socket.emit('position',character);
+			}
+		}
+		
+		if(this.keysDOWN.isDown)//hypothése keysdown et isUP ne matchs pas
+		{
+			character.anims.play('slicedown',true);
+			socket.emit('slicedown',{character:character,id:character.id});
+			/*if(character.x>=character2.x-20 && character.x<=character2.x+20 && character.y>=character2.y-70 && character.y<=character2.y)
+			{
+				console.log("you've hit the other")
+			}*/	
+		}
+		else if(this.keysLEFT.isDown)
+		{
+			character.anims.play('sliceleft',true);
+			socket.emit('sliceleft',{character:character,id:character.id});
+			/*if(character.y>=character2.y-20 && character.y<=character2.y+20 && character.x<=character2.x+50 && character.x>=character2.x)
+			{
+				console.log("you've hit the other")
+			}*/
+		}
+		else if(this.keysRIGHT.isDown)
+		{
+			character.anims.play('sliceright',true);
+			socket.emit('sliceright',{character:character,id:character.id});
+			/*if(character.y>=character2.y-20 && character.y<=character2.y+20 && character.x>=character2.x-50 && character.x<=character2.x)
+			{
+				console.log("you've hit the other")
+			}*/
+		}
+		else if(this.keysUP.isDown)
+		{
+			character.anims.play('sliceup',true);
+			socket.emit('sliceup',{character:character,id:character.id});//ici
+			/*if(character.x>=character2.x-20 && character.x<=character2.x+20 && character.y<=character2.y+70 && character.y>=character2.y)
+			{
+				console.log("you've hit the other")
+			}*/
+		}
+		
 		
 	}
 }
