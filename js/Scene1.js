@@ -323,7 +323,6 @@ class Scene1 extends Phaser.Scene{
 		{
 			usersanim[i].setVelocity(0);
 		}
-		character.anims.play('idle',true);
 		
 		if(cursors.down.isDown)
 		{
@@ -355,6 +354,7 @@ class Scene1 extends Phaser.Scene{
 		}
 		else if(cursors.down.isUp)
 		{
+			character.anims.play('idle',true);
 			if(flag==true)
 			{
 			flag=false;
@@ -363,6 +363,7 @@ class Scene1 extends Phaser.Scene{
 		}
 		else if(cursors.left.isUp)
 		{
+			character.anims.play('idle',true);
 			if(flag==true)
 			{
 			flag=false;
@@ -371,6 +372,7 @@ class Scene1 extends Phaser.Scene{
 		}
 		else if(cursors.right.isUp)
 		{
+			character.anims.play('idle',true);
 			if(flag==true)
 			{
 			flag=false;
@@ -379,6 +381,7 @@ class Scene1 extends Phaser.Scene{
 		}
 		else if(cursors.up.isUp)
 		{
+			character.anims.play('idle',true);
 			if(flag==true)
 			{
 			flag=false;
