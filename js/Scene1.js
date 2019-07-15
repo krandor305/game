@@ -240,6 +240,7 @@ class Scene1 extends Phaser.Scene{
 				{
 					usersanim[i].x=c.x;
 					usersanim[i].y=c.y;
+					usersanim[i].anims.play('idle',true);
 				}
 			}
 		});
