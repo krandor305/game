@@ -197,7 +197,7 @@ class Scene1 extends Phaser.Scene{
 		walls=map.createStaticLayer('walls',arena,0,0);
 		var c2=map.createStaticLayer('Calque 2',arena,0,0);
 		walls.setCollisionByProperty({ collides: true });
-		character = new humain({scene:this,x:500,y:600},0).setScale(1);
+		character = new humain({scene:this,x:500,y:600},usersanim.length).setScale(1);
 		this.physics.add.collider(character, walls);
 		this.cameras.main.startFollow(character);
 		cursors = this.input.keyboard.createCursorKeys();
@@ -227,7 +227,7 @@ class Scene1 extends Phaser.Scene{
 		
 		let self=this;
 		socket.on('nouveau',function(c){
-			console.log(c.id);
+			//console.log(c.id);
 			usersanim.push(self.physics.add.sprite(c.x,c.y,"character"));
 			usersanim[usersanim.length-1].id=c.id;
 			usersanim[usersanim.length-1].anims.play('idle',true);
