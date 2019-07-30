@@ -15,13 +15,17 @@ app.get('/',function(req,res)
 });
 
 io.sockets.on('connection',function(socket){
-	
 		socket.on('new',function(character){
 		character.id=users.length;
 		users.push(character);
 		socket.broadcast.emit('nouveau',character);
 		socket.emit('firstresponse',{users:users,character:character});
 		
+		});
+		
+		socket.on('disc', function(c) {
+		users.splice(c, 1);
+		io.emit('disc',c);
 		});
 		
 		socket.on('position',function(data){

@@ -233,6 +233,35 @@ class Scene1 extends Phaser.Scene{
 			usersanim[usersanim.length-1].anims.play('idle',true);
 		});
 		
+		socket.on('disc', function(c) {
+		for(var i=0;i<usersanim.length;i++)
+		{
+			if(usersanim[i].id==c)
+			{
+				usersanim[i].destroy()
+				usersanim.splice(i, 1);
+				console.log(i)
+			}
+		}
+		});
+		
+		
+		window.onbeforeunload = function(){
+		socket.emit('disc',character.id);
+		};
+		
+		
+		/*socket.on('disconnect',function(c){
+			for(var i=0;i<usersanim.length;i++)
+			{
+				if(usersanim[i].id==c)
+				{
+					usersanim[i].destroy();
+					usersanim.splice(i,1);
+				}
+			}
+		});*/
+		
 		socket.on('position',function(c){
 			for(var i=0;i<usersanim.length;i++)
 			{
